@@ -98,6 +98,7 @@ function usage() {
   oma-avatar emotion neutral|happy|concerned|thinking
   oma-avatar arms balance|normal|stop
   oma-avatar eyes auto|center|left|right|up|down
+  oma-avatar <command> ... -sec <seconds>
   oma-avatar run <script.ava>
   oma-avatar speech start <relative-audio-file> [speech-id]
   oma-avatar speech stop [speech-id]
@@ -130,6 +131,22 @@ function makeMessage(args, seq) {
   if (command === 'ping' && args.length === 1) return { version: VERSION, seq, type: 'ping' }
   throw new Error('invalid arguments')
 }
+function splitDuration(args) {
+  if (args.length < 2 || args.at(-2) !== '-sec') return { commandArgs: args, seconds: 0 }
+  const seconds = Number(args.at(-1))
+  if (!Number.isFinite(seconds) || seconds < 0 || seconds > 3_600) {
+    throw new Error('duration must be a number of seconds from 0 to 3600')
+  }
+  return { commandArgs: args.slice(0, -2), seconds }
+}
+
+async function sendCommand(args, directory) {
+  const { commandArgs, seconds } = splitDuration(args)
+  const message = makeMessage(commandArgs, nextSequence(directory))
+  await sendWithAutoStart(directory, message)
+  if (seconds > 0) await new Promise((resolve) => setTimeout(resolve, seconds * 1_000))
+}
+
 
 function send(directory, message) {
   const socketPath = path.join(directory, 'bridge.sock')
@@ -220,8 +237,7 @@ async function executeScript(file, directory) {
         if (result.done) throw new Error(`script line ${index + 1}: input closed while waiting for Enter`)
         continue
       }
-      const message = makeMessage(parts, nextSequence(directory))
-      await sendWithAutoStart(directory, message)
+      await sendCommand(parts, directory)
     }
   } finally {
     input.close()
@@ -238,8 +254,7 @@ if (args.length === 0 || args[0] === 'help') {
       if (args.length !== 2) throw new Error('run requires one .ava script file')
       await executeScript(args[1], directory)
     } else {
-      const message = makeMessage(args, nextSequence(directory))
-      await sendWithAutoStart(directory, message)
+      await sendCommand(args, directory)
     }
   } catch (error) {
     const code = error?.code

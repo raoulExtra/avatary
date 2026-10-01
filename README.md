@@ -40,6 +40,14 @@ bin/oma-avatar emotion happy
 bin/oma-avatar emotion concerned
 bin/oma-avatar emotion neutral
 ```
+Append `-sec <seconds>` to hold any pose, eye direction, state, or speech
+command for that duration before the CLI exits:
+
+```bash
+bin/oma-avatar arms stop -sec 3
+bin/oma-avatar eyes left -sec 1.5
+```
+
 Command scripts use one command per line. Blank lines and `#` comments are
 ignored. `sleep 1` pauses for one second, and `enter Continue` waits for Enter
 before continuing:
