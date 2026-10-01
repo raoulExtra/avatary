@@ -45,6 +45,8 @@ Tap `View in my room`, move the phone until a surface is detected, then tap
 `Place Omavatar here`. The current prototype supports one anchored avatar,
 repositioning, and exiting the AR session. It requires an Android device and
 browser exposing WebXR `immersive-ar` with the `hit-test` feature.
+Firefox and desktop browsers show a 3D preview when immersive AR is unavailable;
+they cannot place the avatar into the room.
 
 ## Terminal control
 
