@@ -24,7 +24,7 @@ disable this behavior.
 ```text
 bin/oma-avatar state waiting|thinking|success|error
 bin/oma-avatar emotion neutral|thinking|happy|concerned
-bin/oma-avatar arms balance|normal
+bin/oma-avatar arms balance|normal|stop
 bin/oma-avatar eyes auto|center|left|right|up|down
 bin/oma-avatar speech start <relative-audio-file> [speech-id]
 bin/oma-avatar speech stop [speech-id]
@@ -55,10 +55,10 @@ Emotion commands use the canonical `state` wire message:
 `neutral` → `waiting`, `thinking` → `thinking`, `happy` → `success`, and
 `concerned` → `error`.
 
-The avatar stores the model's loaded arm configuration as `arms for balance`
-(upper arms, lower arms, and hands) and reapplies it during animation. Facial
-expressions, gaze, and head motion can change without disturbing that balance
-pose.
+The avatar supports three arm placements: `normal` lowers the arms beside the
+body, `balance` restores the model's authored pose, and `stop` raises the arms
+with bent elbows and hands forward. Facial expressions, gaze, and head motion
+can change without disturbing the selected pose.
 
 Audio paths must be relative to
 `$XDG_RUNTIME_DIR/oma-avatar/audio/`; absolute paths and parent-directory

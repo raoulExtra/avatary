@@ -28,6 +28,8 @@ enter Press Enter to test arm positions
 
 arms normal
 sleep 1
+arms stop
+sleep 1
 arms balance
 sleep 1
 arms normal

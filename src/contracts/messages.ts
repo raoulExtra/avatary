@@ -36,7 +36,7 @@ export type SpeechStopMessage = MessageBase & {
   readonly type: 'speech.stop'
   readonly speechId?: string
 }
-export type ArmPlacement = 'balance' | 'normal'
+export type ArmPlacement = 'balance' | 'normal' | 'stop'
 
 export type ArmsMessage = MessageBase & {
   readonly type: 'arms'

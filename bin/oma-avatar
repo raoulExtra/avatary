@@ -96,7 +96,7 @@ function usage() {
   console.log(`Usage:
   oma-avatar state waiting|thinking|success|error
   oma-avatar emotion neutral|happy|concerned|thinking
-  oma-avatar arms balance|normal
+  oma-avatar arms balance|normal|stop
   oma-avatar eyes auto|center|left|right|up|down
   oma-avatar run <script.ava>
   oma-avatar speech start <relative-audio-file> [speech-id]
@@ -114,7 +114,7 @@ function makeMessage(args, seq) {
     const mapped = { neutral: 'waiting', thinking: 'thinking', happy: 'success', concerned: 'error' }[first]
     if (mapped) return { version: VERSION, seq, type: 'state', state: mapped }
   }
-  if (command === 'arms' && args.length === 2 && ['balance', 'normal'].includes(first)) {
+  if (command === 'arms' && args.length === 2 && ['balance', 'normal', 'stop'].includes(first)) {
     return { version: VERSION, seq, type: 'arms', placement: first }
   }
   if (command === 'eyes' && args.length === 2 && ['auto', 'center', 'left', 'right', 'up', 'down'].includes(first)) {

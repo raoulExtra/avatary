@@ -20,6 +20,7 @@ type StoredArmPose = {
   readonly position: Vector3
   readonly quaternion: Quaternion
   readonly normalQuaternion: Quaternion
+  readonly stopQuaternion: Quaternion
 }
 
 const ARM_BONES = ['leftUpperArm', 'leftLowerArm', 'leftHand', 'rightUpperArm', 'rightLowerArm', 'rightHand'] as const
@@ -96,10 +97,31 @@ export class VrmExpressionAdapter {
       const node = armNodes[bone]
       if (node) node.quaternion.copy(originalQuaternions[bone])
     }
+    const stopQuaternions: Record<string, Quaternion> = {}
+    for (const side of ['left', 'right'] as const) {
+      const sign = side === 'left' ? 1 : -1
+      const upper = armNodes[`${side}UpperArm`]
+      const lower = armNodes[`${side}LowerArm`]
+      if (upper && lower) {
+        rotateBoneToward(upper, lower, new Vector3(sign * 0.65, -0.75, 0))
+        vrm.scene.updateMatrixWorld(true)
+        const hand = armNodes[`${side}Hand`]
+        if (hand) rotateBoneToward(lower, hand, new Vector3(sign * 0.15, 1, 0))
+        vrm.scene.updateMatrixWorld(true)
+      }
+      for (const bone of [`${side}UpperArm`, `${side}LowerArm`, `${side}Hand`]) {
+        const node = armNodes[bone]
+        if (node) stopQuaternions[bone] = node.quaternion.clone()
+      }
+    }
+    for (const bone of ARM_BONES) {
+      const node = armNodes[bone]
+      if (node) node.quaternion.copy(originalQuaternions[bone])
+    }
     this.armsForBalance = ARM_BONES.flatMap((bone) => {
       const node = armNodes[bone]
       return node
-        ? [{ node, position: node.position.clone(), quaternion: node.quaternion.clone(), normalQuaternion: normalQuaternions[bone] ?? node.quaternion.clone() }]
+        ? [{ node, position: node.position.clone(), quaternion: node.quaternion.clone(), normalQuaternion: normalQuaternions[bone] ?? node.quaternion.clone(), stopQuaternion: stopQuaternions[bone] ?? node.quaternion.clone() }]
         : []
     })
 
@@ -119,7 +141,10 @@ export class VrmExpressionAdapter {
 
     for (const arm of this.armsForBalance) {
       arm.node.position.copy(arm.position)
-      arm.node.quaternion.copy(this.armPlacement === 'normal' ? arm.normalQuaternion : arm.quaternion)
+      const quaternion = this.armPlacement === 'normal'
+        ? arm.normalQuaternion
+        : this.armPlacement === 'stop' ? arm.stopQuaternion : arm.quaternion
+      arm.node.quaternion.copy(quaternion)
     }
 
     if (this.vrm.lookAt) {
