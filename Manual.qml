@@ -6,14 +6,14 @@ import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "local.oma-avatar.manual"
+  moduleName: "peter.omavatar"
 
   readonly property var emotions: ["neutral", "thinking", "happy", "concerned"]
   property int emotionIndex: 0
 
   function sendEmotion() {
     if (sendProc.running) return
-    sendProc.command = ["bash", "-lc", "oma-avatar emotion " + emotions[emotionIndex]]
+    sendProc.command = ["oma-avatar", "emotion", emotions[emotionIndex]]
     sendProc.running = true
   }
 
@@ -32,7 +32,7 @@ BarWidget {
     text: "󰚩"
     slotSize: Style.bar.statusSlot
     fontSize: Style.font.caption
-    tooltipText: "Oma Avatar: " + root.emotions[root.emotionIndex]
+    tooltipText: "Omavatar: " + root.emotions[root.emotionIndex]
     onPressed: {
       root.sendEmotion()
       root.emotionIndex = (root.emotionIndex + 1) % root.emotions.length

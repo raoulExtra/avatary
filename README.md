@@ -1,4 +1,4 @@
-# Oma Avatar
+# Omavatar
 
 Standalone Tauri 2 avatar application. The window is transparent, frameless,
 always-on-top, and centered by default. The local bridge uses newline-delimited
@@ -10,7 +10,7 @@ JSON over `$XDG_RUNTIME_DIR/oma-avatar/bridge.sock`.
 npm install
 npm run tauri:dev
 ```
-The default window size is 360×480 pixels. Override it with
+The default window size is 400×480 pixels. Override it with
 `OMA_AVATAR_WINDOW_WIDTH` and `OMA_AVATAR_WINDOW_HEIGHT` when launching the
 app.
 
@@ -28,6 +28,7 @@ disable this behavior.
 bin/oma-avatar state waiting|thinking|success|error
 bin/oma-avatar emotion neutral|thinking|happy|concerned
 bin/oma-avatar arms balance|normal|stop
+bin/oma-avatar dance swifty|stop
 bin/oma-avatar eyes auto|center|left|right|up|down|discover
 bin/oma-avatar speech start <relative-audio-file> [speech-id]
 bin/oma-avatar speech stop [speech-id]
@@ -73,6 +74,10 @@ body, `balance` restores the model's authored pose, and `stop` raises the arms
 with bent elbows and hands forward. Facial expressions, gaze, and head motion
 can change without disturbing the selected pose.
 
+`dance swifty` starts a looping, procedural pop-star dance with alternating
+arm gestures, side steps, hip sway, and a light bounce. Stop it with
+`dance stop`; it does not require music or a bundled choreography asset.
+
 Audio paths must be relative to
 `$XDG_RUNTIME_DIR/oma-avatar/audio/`; absolute paths and parent-directory
 traversal are rejected. The CLI persists its monotonic sequence in
@@ -84,22 +89,86 @@ bin/oma-avatar speech start demo.wav demo-1
 bin/oma-avatar speech stop demo-1
 ```
 
-## Omarchy manual plugin
+## Omarchy plugin
 
-`omarchy-plugin/` is a real user-owned bar-widget plugin. Install the CLI and
-copy the plugin into the user plugin directory:
+The repository root is also a valid Omarchy `bar-widget` plugin:
+
+- Manifest: `manifest.json`
+- Entry point: `Manual.qml`
+- Plugin ID: `peter.omavatar`
+
+The plugin controls the separately installed `oma-avatar` CLI. It does not
+install or start a second Quickshell process. Install the CLI and plugin from
+this checkout:
 
 ```bash
-mkdir -p "$HOME/.local/bin" "$HOME/.config/omarchy/plugins/local.oma-avatar.manual"
-ln -sf "$(pwd)/bin/oma-avatar" "$HOME/.local/bin/oma-avatar"
-cp omarchy-plugin/manifest.json omarchy-plugin/Manual.qml \
-  "$HOME/.config/omarchy/plugins/local.oma-avatar.manual/"
+set -eu
+
+plugin_id=peter.omavatar
+plugin_dir="$HOME/.config/omarchy/plugins/$plugin_id"
+cli_link="$HOME/.local/bin/oma-avatar"
+repo_dir="$(pwd)"
+cli_target="$repo_dir/bin/oma-avatar"
+
+mkdir -p "$HOME/.local/bin"
+if [ -e "$cli_link" ] || [ -L "$cli_link" ]; then
+  [ -L "$cli_link" ] &&
+    [ "$(readlink "$cli_link")" = "$cli_target" ] ||
+    { echo "refusing to replace existing $cli_link" >&2; exit 1; }
+else
+  ln -s "$cli_target" "$cli_link"
+fi
+
+install -d "$plugin_dir"
+install -m644 manifest.json Manual.qml "$plugin_dir/"
 omarchy-shell shell rescanPlugins
-omarchy plugin enable local.oma-avatar.manual
+omarchy plugin enable "$plugin_id"
 ```
 
 Clicking the bar widget cycles `neutral`, `thinking`, `happy`, and
-`concerned`; the same commands remain available directly from a terminal.
+`concerned`. The CLI must be on `PATH`; the first command automatically starts
+the Omavatar bridge when needed.
+
+Validate the installed plugin:
+
+```bash
+omarchy plugin validate "$HOME/.config/omarchy/plugins/peter.omavatar"
+qmllint -I "$OMARCHY_PATH/shell" \
+  "$HOME/.config/omarchy/plugins/peter.omavatar/Manual.qml"
+```
+
+Remove only the files installed by this project:
+
+```bash
+set -eu
+
+plugin_id=peter.omavatar
+plugin_dir="$HOME/.config/omarchy/plugins/$plugin_id"
+cli_link="$HOME/.local/bin/oma-avatar"
+repo_dir="$(pwd)"
+
+omarchy plugin disable "$plugin_id" || true
+rm -rf -- "$plugin_dir"
+if [ -L "$cli_link" ] &&
+   [ "$(readlink "$cli_link")" = "$repo_dir/bin/oma-avatar" ]; then
+  rm -- "$cli_link"
+fi
+omarchy-shell shell rescanPlugins
+```
+
+### Omarchy app discovery
+
+The plugin setup already places `oma-avatar` on `PATH`. Install the desktop
+entry separately if you also want `Omavatar` in the app launcher:
+
+```bash
+install -Dm644 omarchy/oma-avatar.desktop \
+  "$HOME/.local/share/applications/oma-avatar.desktop"
+update-desktop-database "$HOME/.local/share/applications"
+```
+
+Selecting `Omavatar` runs `oma-avatar ping`, which starts the avatar bridge
+when needed.
 
 ## Development checks
 
