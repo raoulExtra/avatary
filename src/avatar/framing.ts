@@ -12,6 +12,7 @@ export type VrmFrame = {
 export type FrameOptions = {
   readonly verticalFovDegrees?: number
   readonly padding?: number
+  readonly distanceScale?: number
   readonly minDistance?: number
   readonly maxDistance?: number
 }
@@ -19,6 +20,7 @@ export type FrameOptions = {
 const DEFAULTS = {
   verticalFovDegrees: 28,
   padding: 1.0,
+  distanceScale: 0.5,
   minDistance: 0.25,
   maxDistance: 20,
 } as const
@@ -61,10 +63,11 @@ export function calculateVrmFrame(vrm: VRM, options: FrameOptions = {}): VrmFram
 
   const fov = Math.min(Math.max(options.verticalFovDegrees ?? DEFAULTS.verticalFovDegrees, 10), 100)
   const padding = Math.min(Math.max(options.padding ?? DEFAULTS.padding, 1), 3)
+  const distanceScale = Math.min(Math.max(options.distanceScale ?? DEFAULTS.distanceScale, 0.1), 3)
   const minDistance = Math.max(options.minDistance ?? DEFAULTS.minDistance, 0.05)
   const maxDistance = Math.max(options.maxDistance ?? DEFAULTS.maxDistance, minDistance)
   const fovRadians = (fov * Math.PI) / 180
-  const distance = Math.min(Math.max((height * padding * 0.5) / Math.tan(fovRadians / 2), minDistance), maxDistance)
+  const distance = Math.min(Math.max((height * padding * 0.5) / Math.tan(fovRadians / 2) * distanceScale, minDistance), maxDistance)
   return {
     target,
     distance,

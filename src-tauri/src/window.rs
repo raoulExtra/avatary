@@ -2,8 +2,8 @@ use std::env;
 
 use tauri::{App, PhysicalPosition, Position, Runtime, WebviewUrl, WebviewWindowBuilder, Window};
 
-const DEFAULT_WIDTH: f64 = 360.0;
-const DEFAULT_HEIGHT: f64 = 480.0;
+const DEFAULT_WIDTH: f64 = 180.0;
+const DEFAULT_HEIGHT: f64 = 240.0;
 
 #[derive(Debug)]
 struct WindowSettings {
