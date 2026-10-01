@@ -39,6 +39,16 @@ function ArPlacement({ modelUrl, controller, locked, onLoaded, onError, onPlacem
     let disposed = false
     let activeSession: XRSession | undefined
 
+    const showFallbackPreview = () => {
+      const group = groupRef.current
+      if (!group || gl.xr.isPresenting) return
+      group.position.set(0, 0, 0)
+      group.quaternion.identity()
+      group.scale.setScalar(0.75)
+      group.updateMatrix()
+      group.visible = true
+    }
+
     const clearHitTest = () => {
       hitTestSourceRef.current?.cancel()
       hitTestSourceRef.current = undefined
@@ -46,7 +56,12 @@ function ArPlacement({ modelUrl, controller, locked, onLoaded, onError, onPlacem
       activeSession = undefined
       availableRef.current = false
       onPlacementAvailable(false)
-      if (groupRef.current && !lockedRef.current) groupRef.current.visible = false
+      if (lockedRef.current) return
+      if (gl.xr.isPresenting) {
+        if (groupRef.current) groupRef.current.visible = false
+      } else {
+        showFallbackPreview()
+      }
     }
 
     const prepareHitTest = async () => {
@@ -70,11 +85,15 @@ function ArPlacement({ modelUrl, controller, locked, onLoaded, onError, onPlacem
       }
     }
 
-    const onSessionStart = () => void prepareHitTest()
+    const onSessionStart = () => {
+      if (groupRef.current) groupRef.current.visible = false
+      void prepareHitTest()
+    }
     const onSessionEnd = () => clearHitTest()
     gl.xr.addEventListener('sessionstart', onSessionStart)
     gl.xr.addEventListener('sessionend', onSessionEnd)
     if (gl.xr.isPresenting) void prepareHitTest()
+    else showFallbackPreview()
 
     return () => {
       disposed = true
@@ -116,7 +135,7 @@ function ArPlacement({ modelUrl, controller, locked, onLoaded, onError, onPlacem
   })
 
   return (
-    <group ref={groupRef} visible={false} matrixAutoUpdate={false}>
+    <group ref={groupRef} visible={true} matrixAutoUpdate={false}>
       <VrmAvatar
         url={modelUrl}
         controller={controller}

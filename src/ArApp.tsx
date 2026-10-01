@@ -94,9 +94,9 @@ export function ArApp() {
       />
       <section className="ar-card" aria-live="polite">
         <strong>Omavatar AR</strong>
-        <span>{model ? 'Avatar ready' : 'Loading avatar…'}</span>
+        <span>{model ? (support === 'unsupported' ? '3D preview' : 'Avatar ready') : 'Loading avatar…'}</span>
         {support === 'checking' ? <small>Checking ARCore support…</small> : null}
-        {support === 'unsupported' ? <small>Open this page in Chrome on an ARCore-capable Android phone over HTTPS.</small> : null}
+        {support === 'unsupported' ? <small>AR placement needs Chrome on an ARCore-capable Android phone over HTTPS. The preview remains available here.</small> : null}
         {support === 'supported' && session !== 'active' ? (
           <button type="button" onClick={() => void enterAr()} disabled={session === 'starting' || !model}>
             {session === 'starting' ? 'Starting camera…' : 'View in my room'}
