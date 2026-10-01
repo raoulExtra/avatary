@@ -3,6 +3,7 @@ import type { VRM } from '@pixiv/three-vrm'
 
 export type VrmFrame = {
   readonly target: Vector3
+  readonly cameraTarget: Vector3
   readonly distance: number
   readonly near: number
   readonly far: number
@@ -20,7 +21,7 @@ export type FrameOptions = {
 const DEFAULTS = {
   verticalFovDegrees: 28,
   padding: 1.0,
-  distanceScale: 0.5,
+  distanceScale: 1.0,
   minDistance: 0.25,
   maxDistance: 20,
 } as const
@@ -68,8 +69,16 @@ export function calculateVrmFrame(vrm: VRM, options: FrameOptions = {}): VrmFram
   const maxDistance = Math.max(options.maxDistance ?? DEFAULTS.maxDistance, minDistance)
   const fovRadians = (fov * Math.PI) / 180
   const distance = Math.min(Math.max((height * padding * 0.5) / Math.tan(fovRadians / 2) * distanceScale, minDistance), maxDistance)
+  const cameraTarget = bounds.isEmpty()
+    ? target.clone()
+    : new Vector3(
+        (bounds.min.x + bounds.max.x) / 2,
+        bounds.min.y + height * 0.5,
+        (bounds.min.z + bounds.max.z) / 2,
+      )
   return {
     target,
+    cameraTarget,
     distance,
     near: Math.max(0.01, distance / 100),
     far: Math.max(distance * 20, 10),
@@ -83,6 +92,6 @@ export function applyVrmFrame(camera: PerspectiveCamera, frame: VrmFrame, positi
   camera.far = frame.far
   camera.updateProjectionMatrix()
   if (position) camera.position.copy(position)
-  else camera.position.set(frame.target.x, frame.target.y, frame.target.z + frame.distance)
-  camera.lookAt(frame.target)
+  else camera.position.set(frame.cameraTarget.x, frame.cameraTarget.y, frame.cameraTarget.z + frame.distance)
+  camera.lookAt(frame.cameraTarget)
 }
