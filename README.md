@@ -16,8 +16,10 @@ its attribution and MIT license are in `public/README.md`.
 
 ## Terminal control
 
-With the avatar running, the executable `bin/oma-avatar` sends one sequenced
-protocol message per invocation:
+The executable `bin/oma-avatar` sends one sequenced protocol message per
+invocation. If the bridge is unavailable, the CLI starts `tauri:dev`
+automatically and waits for the socket. Set `OMA_AVATAR_NO_AUTO_START=1` to
+disable this behavior.
 
 ```text
 bin/oma-avatar state waiting|thinking|success|error
