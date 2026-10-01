@@ -5,6 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import readline from 'node:readline/promises'
 
 const VERSION = 1
 const MAX_SEQUENCE = Number.MAX_SAFE_INTEGER
@@ -97,6 +98,7 @@ function usage() {
   oma-avatar emotion neutral|happy|concerned|thinking
   oma-avatar arms balance|normal
   oma-avatar eyes auto|center|left|right|up|down
+  oma-avatar run <script.ava>
   oma-avatar speech start <relative-audio-file> [speech-id]
   oma-avatar speech stop [speech-id]
   oma-avatar ping
@@ -191,6 +193,40 @@ async function sendWithAutoStart(directory, message) {
     await send(directory, message)
   }
 }
+async function executeScript(file, directory) {
+  if (!file || !file.endsWith('.ava')) throw new Error('script file must use the .ava extension')
+  const input = readline.createInterface({ input: process.stdin, output: process.stdout })
+  const inputIterator = input[Symbol.asyncIterator]()
+  try {
+    const lines = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8').split(/\r?\n/u)
+    for (const [index, rawLine] of lines.entries()) {
+      const line = rawLine.trim()
+      if (!line || line.startsWith('#')) continue
+      const parts = line.split(/\s+/u)
+      const [command, value] = parts
+      console.log(`ava> ${line}`)
+      if (command === 'sleep') {
+        const seconds = Number(value)
+        if (parts.length !== 2 || !Number.isFinite(seconds) || seconds < 0 || seconds > 3_600) {
+          throw new Error(`script line ${index + 1}: sleep requires seconds from 0 to 3600`)
+        }
+        await new Promise((resolve) => setTimeout(resolve, seconds * 1_000))
+        continue
+      }
+      if (command === 'enter') {
+        const prompt = parts.slice(1).join(' ') || 'Press Enter to continue'
+        process.stdout.write(`${prompt} `)
+        const result = await inputIterator.next()
+        if (result.done) throw new Error(`script line ${index + 1}: input closed while waiting for Enter`)
+        continue
+      }
+      const message = makeMessage(parts, nextSequence(directory))
+      await sendWithAutoStart(directory, message)
+    }
+  } finally {
+    input.close()
+  }
+}
 
 const args = process.argv.slice(2)
 if (args.length === 0 || args[0] === 'help') {
@@ -198,8 +234,13 @@ if (args.length === 0 || args[0] === 'help') {
 } else {
   try {
     const directory = runtimeDirectory()
-    const message = makeMessage(args, nextSequence(directory))
-    await sendWithAutoStart(directory, message)
+    if (args[0] === 'run') {
+      if (args.length !== 2) throw new Error('run requires one .ava script file')
+      await executeScript(args[1], directory)
+    } else {
+      const message = makeMessage(args, nextSequence(directory))
+      await sendWithAutoStart(directory, message)
+    }
   } catch (error) {
     const code = error?.code
     if (code === 'ENOENT' || code === 'ECONNREFUSED') fail('avatar is not running (bridge socket is unavailable)')

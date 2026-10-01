@@ -1,0 +1,47 @@
+# Oma Avatar command showcase
+# Run with: bin/oma-avatar run all_cmd.ava
+
+ping
+enter Press Enter to test state commands
+
+state waiting
+sleep 1
+state thinking
+sleep 1
+state success
+sleep 1
+state error
+sleep 1
+state waiting
+enter Press Enter to test emotion commands
+
+emotion neutral
+sleep 1
+emotion thinking
+sleep 1
+emotion happy
+sleep 1
+emotion concerned
+sleep 1
+emotion neutral
+enter Press Enter to test arm positions
+
+arms normal
+sleep 1
+arms balance
+sleep 1
+arms normal
+enter Press Enter to test eye directions
+
+eyes left
+sleep 1
+eyes right
+sleep 1
+eyes up
+sleep 1
+eyes down
+sleep 1
+eyes center
+sleep 1
+eyes auto
+enter Script complete

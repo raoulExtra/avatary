@@ -28,8 +28,8 @@ bin/oma-avatar arms balance|normal
 bin/oma-avatar eyes auto|center|left|right|up|down
 bin/oma-avatar speech start <relative-audio-file> [speech-id]
 bin/oma-avatar speech stop [speech-id]
+bin/oma-avatar run <script.ava>
 bin/oma-avatar ping
-bin/oma-avatar help
 ```
 
 Example:
@@ -40,6 +40,16 @@ bin/oma-avatar emotion happy
 bin/oma-avatar emotion concerned
 bin/oma-avatar emotion neutral
 ```
+Command scripts use one command per line. Blank lines and `#` comments are
+ignored. `sleep 1` pauses for one second, and `enter Continue` waits for Enter
+before continuing:
+
+```bash
+bin/oma-avatar run all_cmd.ava
+```
+
+The repository includes `all_cmd.ava` as a manual smoke sequence for state,
+emotion, arm, eye, and ping commands.
 
 Emotion commands use the canonical `state` wire message:
 `neutral` → `waiting`, `thinking` → `thinking`, `happy` → `success`, and
