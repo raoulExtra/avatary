@@ -28,9 +28,21 @@ Scan this QR code with the Android Camera app or the iPhone Camera app:
 
 The QR code opens the same platform-neutral page on Android and iOS:
 
-- **Android + Chrome + ARCore:** place Omavatar on a detected floor or table.
+- **Android + Chrome + WebXR:** place Omavatar on a detected floor or table
+  when the browser exposes `immersive-ar` and `hit-test`.
+- **Android + Google Scene Viewer:** tap `Open with Android AR` to launch the
+  standard `avatar.glb` through Google's native AR viewer. This path uses
+  Google Play Services for AR instead of WebXR.
 - **iPhone + Safari:** view the interactive 3D preview. iOS room AR is not
   supported by the current WebXR implementation.
+
+Scene Viewer receives a static GLB conversion of the VRM, so the browser
+preview's VRM expressions and runtime animation are not included in this
+fallback. Regenerate it with:
+
+```bash
+node scripts/convert-vrm-to-scene-viewer-glb.mjs
+```
 
 The prototype uses the existing VRM renderer and does not connect to the
 desktop bridge.

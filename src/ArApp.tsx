@@ -17,7 +17,7 @@ function describeArSessionError(error: unknown): string {
   const name = error instanceof Error ? error.name : 'UnknownError'
   const message = describeError(error)
   if (name === 'NotSupportedError') {
-    return 'This browser or device does not support immersive AR with hit testing. Use Chrome on an ARCore Android phone.'
+    return 'The browser rejected immersive AR with hit testing. ARCore may still be available on this device; try the latest Chrome over HTTPS.'
   }
   if (name === 'NotAllowedError') {
     return 'AR permission was denied. Allow camera and motion access, then start AR again from the button.'
@@ -26,6 +26,17 @@ function describeArSessionError(error: unknown): string {
     return 'AR requires HTTPS and a permitted camera context.'
   }
   return `${name}: ${message}`
+}
+function sceneViewerIntent(): string {
+  const modelUrl = new URL(`${import.meta.env.BASE_URL}avatar.glb`, window.location.origin).href
+  const fallbackUrl = window.location.href
+  const query = [
+    `file=${encodeURIComponent(modelUrl)}`,
+    'mode=ar_preferred',
+    `title=${encodeURIComponent('Omavatar')}`,
+    'resizable=true',
+  ].join('&')
+  return `intent://arvr.google.com/scene-viewer/1.0?${query}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallbackUrl)};end;`
 }
 
 export function ArApp() {
@@ -37,6 +48,7 @@ export function ArApp() {
   const [placed, setPlaced] = useState(false)
   const [model, setModel] = useState<LoadedVrm>()
   const [error, setError] = useState<string>()
+  const sceneViewerUrl = useMemo(sceneViewerIntent, [])
 
   useEffect(() => {
     let cancelled = false
@@ -114,7 +126,9 @@ export function ArApp() {
         <strong>Omavatar AR</strong>
         <span>{model ? (support === 'unsupported' ? '3D preview' : 'Avatar ready') : 'Loading avatar…'}</span>
         {support === 'checking' ? <small>Checking ARCore support…</small> : null}
-        {support === 'unsupported' ? <small>AR placement needs Chrome on an ARCore-capable Android phone over HTTPS. The preview remains available here.</small> : null}
+        {support === 'unsupported' ? <small>This browser did not expose immersive AR with hit testing. The 3D preview remains available here.</small> : null}
+        <a className="ar-scene-viewer" href={sceneViewerUrl}>Open with Android AR</a>
+        <small>Android uses Google Scene Viewer with a standard GLB fallback.</small>
         {support === 'supported' && session !== 'active' ? (
           <button type="button" onClick={() => void enterAr()} disabled={session === 'starting' || !model}>
             {session === 'starting' ? 'Starting camera…' : 'View in my room'}
