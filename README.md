@@ -10,6 +10,9 @@ JSON over `$XDG_RUNTIME_DIR/oma-avatar/bridge.sock`.
 npm install
 npm run tauri:dev
 ```
+The default window size is 360×480 pixels. Override it with
+`OMA_AVATAR_WINDOW_WIDTH` and `OMA_AVATAR_WINDOW_HEIGHT` when launching the
+app.
 
 The bundled `public/avatar.vrm` is the VRM 1.0 sample from pixiv/three-vrm;
 its attribution and MIT license are in `public/README.md`.
