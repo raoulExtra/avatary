@@ -47,6 +47,10 @@ export function App() {
       case 'arms':
         setArmPlacement(message.placement)
         break
+      case 'dance':
+        if (message.style === 'stop') controller.stopDance()
+        else controller.setDance(message.style)
+        break
       case 'eyes':
         setEyeDirection(message.direction)
         break
@@ -110,7 +114,7 @@ export function App() {
   return (
     <main className="avatar-shell">
       <AvatarScene
-        modelUrl="/avatar.vrm"
+        modelUrl={`${import.meta.env.BASE_URL}avatar.vrm`}
         controller={controller}
         mouthOpen={mouthOpen}
         armPlacement={armPlacement}
@@ -119,7 +123,7 @@ export function App() {
         onError={onModelError}
       />
       <section className="status-card" aria-live="polite">
-        <strong>Oma Avatar</strong>
+        <strong>Omavatar</strong>
         <span className={`status-dot status-${status}`} />
         <span>{assistantState.state}{assistantState.speaking ? ' · speaking' : ''}</span>
         <small>{model ? `${model.version} · ${model.capabilities.unsupported.length ? 'partial capabilities' : 'full capabilities'}` : 'loading model…'}</small>

@@ -84,7 +84,7 @@ export function ArApp() {
   return (
     <main className="ar-shell">
       <ArAvatarScene
-        modelUrl="/avatar.vrm"
+        modelUrl={`${import.meta.env.BASE_URL}avatar.vrm`}
         controller={controller}
         locked={placed}
         onLoaded={onLoaded}

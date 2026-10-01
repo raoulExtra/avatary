@@ -20,6 +20,7 @@ its attribution and MIT license are in `public/README.md`.
 ## Android AR prototype
 
 Source entrypoint: [`ar.html`](./ar.html)
+Live AR page: <https://raoulextra.github.io/omavatar/ar.html>
 
 Open `ar.html` on an ARCore-capable Android phone to place Omavatar on a
 detected floor or table. The prototype uses WebXR immersive AR and the
