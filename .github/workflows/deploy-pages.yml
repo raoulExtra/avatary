@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build site
-        run: npm run build -- --config vite.config.pages.ts
+        run: npx vite build --config vite.config.pages.ts
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
