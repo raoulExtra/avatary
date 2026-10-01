@@ -17,18 +17,23 @@ app.
 The bundled `public/avatar.vrm` is the VRM 1.0 sample from pixiv/three-vrm;
 its attribution and MIT license are in `public/README.md`.
 
-## Android AR prototype
+## Mobile AR and 3D preview
 
 Source entrypoint: [`ar.html`](./ar.html)
-Live AR page: <https://raoulextra.github.io/omavatar/ar.html>
+Live page: <https://raoulextra.github.io/omavatar/ar.html>
 
-Scan this QR code with the Android Camera app:
+Scan this QR code with the Android Camera app or the iPhone Camera app:
 
-![Omavatar AR QR code](./public/omavatar-ar-qr.png)
+![Omavatar mobile AR and 3D preview QR code](./public/omavatar-ar-qr.png)
 
-Open `ar.html` on an ARCore-capable Android phone to place Omavatar on a
-detected floor or table. The prototype uses WebXR immersive AR and the
-existing VRM renderer; it does not connect to the desktop bridge.
+The QR code opens the same platform-neutral page on Android and iOS:
+
+- **Android + Chrome + ARCore:** place Omavatar on a detected floor or table.
+- **iPhone + Safari:** view the interactive 3D preview. iOS room AR is not
+  supported by the current WebXR implementation.
+
+The prototype uses the existing VRM renderer and does not connect to the
+desktop bridge.
 
 For local development:
 
