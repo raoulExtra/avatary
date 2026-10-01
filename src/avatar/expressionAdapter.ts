@@ -30,12 +30,12 @@ const MOUTH_NAMES = ['aa', 'A', 'mouthA', 'MouthA', 'a']
 const HAPPY_NAMES = ['happy', 'joy', 'fun', 'Joy', 'Happy']
 const CONCERNED_NAMES = ['sad', 'sorrow', 'Sorrow', 'Sad']
 
-const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto'>, readonly [number, number]> = {
-  center: [0, 0],
-  left: [-0.28, 0],
-  right: [0.28, 0],
-  up: [0, 0.2],
-  down: [0, -0.2],
+const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto'>, readonly [number, number, number]> = {
+  center: [0, 0, 1],
+  left: [-0.28, 0, 1],
+  right: [0.28, 0, 1],
+  up: [0, 0.2, 1],
+  down: [0, -0.2, 1],
 }
 function firstExpression(manager: ExpressionManager | undefined, names: readonly string[]): string | undefined {
   return names.find((name) => Boolean(manager?.getExpression(name)))
@@ -150,11 +150,13 @@ export class VrmExpressionAdapter {
     if (this.vrm.lookAt) {
       this.lookTarget.copy(target)
       if (eyeDirection === 'auto') {
+        this.lookTarget.z += 1
         if (output.intent.gaze.kind === 'up') this.lookTarget.y += output.intent.gaze.amount
       } else {
-        const [x, y] = EYE_OFFSETS[eyeDirection]
+        const [x, y, z] = EYE_OFFSETS[eyeDirection]
         this.lookTarget.x += x
         this.lookTarget.y += y
+        this.lookTarget.z += z
       }
       this.vrm.lookAt.lookAt(this.lookTarget)
     }
