@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.vite/
+src-tauri/target/
+
+*.tsbuildinfo
+
+# Local VRM models and generated audio
+models/
+audio/
+*.vrm
+!public/avatar.vrm
+*.wav
+*.mp3
+*.ogg
+
+# Runtime bridge files
+.oma-runtime/
+bridge.sock
+cli-seq
+*.lock
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.DS_Store

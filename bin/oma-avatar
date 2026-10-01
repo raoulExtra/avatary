@@ -1,0 +1,160 @@
+#!/usr/bin/env node
+import fs from 'node:fs'
+import net from 'node:net'
+import os from 'node:os'
+import path from 'node:path'
+
+const VERSION = 1
+const MAX_SEQUENCE = Number.MAX_SAFE_INTEGER
+const MAX_AUDIO_PATH = 512
+const MAX_SPEECH_ID = 128
+const LOCK_STALE_MS = 10_000
+
+function fail(message) {
+  console.error(`oma-avatar: ${message}`)
+  console.error('Run "oma-avatar help" for usage.')
+  process.exitCode = 1
+}
+
+function runtimeDirectory() {
+  const value = process.env.XDG_RUNTIME_DIR
+  if (!value) throw new Error('XDG_RUNTIME_DIR is not set; cannot locate the avatar socket')
+  if (!path.isAbsolute(value)) throw new Error('XDG_RUNTIME_DIR must be an absolute path')
+  return path.join(value, 'oma-avatar')
+}
+
+function validateAudioPath(value) {
+  if (!value || value.length > MAX_AUDIO_PATH || value.includes('\0')) {
+    throw new Error(`audio path must be 1-${MAX_AUDIO_PATH} characters`)
+  }
+  if (value.startsWith('/') || value.includes('\\')) throw new Error('audio path must be a POSIX-relative path')
+  const parts = value.split('/')
+  if (parts.some((part) => part === '' || part === '.' || part === '..')) {
+    throw new Error('audio path must stay below the runtime audio directory (no ., .., or empty segments)')
+  }
+  return value
+}
+
+function validateSpeechId(value) {
+  if (value === undefined) return undefined
+  if (!value || value.length > MAX_SPEECH_ID || /[\0\r\n]/u.test(value)) {
+    throw new Error(`speech id must be 1-${MAX_SPEECH_ID} characters without newlines`)
+  }
+  return value
+}
+
+function nextSequence(directory) {
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 })
+  const sequenceFile = path.join(directory, 'cli-seq')
+  const lockFile = `${sequenceFile}.lock`
+  let locked = false
+  try {
+    const deadline = Date.now() + 2_000
+    while (!locked) {
+      try {
+        const descriptor = fs.openSync(lockFile, 'wx', 0o600)
+        fs.closeSync(descriptor)
+        locked = true
+      } catch (error) {
+        if (error?.code !== 'EEXIST') throw error
+        try {
+          if (Date.now() - fs.statSync(lockFile).mtimeMs > LOCK_STALE_MS) fs.unlinkSync(lockFile)
+        } catch (statError) {
+          if (statError?.code !== 'ENOENT') throw statError
+        }
+        if (Date.now() >= deadline) throw new Error('timed out waiting for the CLI sequence lock')
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20)
+      }
+    }
+    let previous = 0
+    try {
+      const text = fs.readFileSync(sequenceFile, 'utf8').trim()
+      if (/^[0-9]+$/u.test(text)) previous = Number(text)
+      if (!Number.isSafeInteger(previous) || previous < 0) previous = 0
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error
+    }
+    if (previous >= MAX_SEQUENCE) throw new Error('CLI sequence is exhausted; remove cli-seq only after stopping all senders')
+    const next = previous + 1
+    const temporary = `${sequenceFile}.${process.pid}.tmp`
+    fs.writeFileSync(temporary, `${next}\n`, { encoding: 'utf8', mode: 0o600 })
+    fs.renameSync(temporary, sequenceFile)
+    return next
+  } finally {
+    if (locked) {
+      try { fs.unlinkSync(lockFile) } catch (error) { if (error?.code !== 'ENOENT') throw error }
+    }
+  }
+}
+
+function usage() {
+  console.log(`Usage:
+  oma-avatar state waiting|thinking|success|error
+  oma-avatar emotion neutral|happy|concerned|thinking
+  oma-avatar arms balance|normal
+  oma-avatar eyes auto|center|left|right|up|down
+  oma-avatar speech start <relative-audio-file> [speech-id]
+  oma-avatar speech stop [speech-id]
+  oma-avatar ping
+  oma-avatar help`)
+}
+
+function makeMessage(args, seq) {
+  const [command, first, second, extra] = args
+  if (command === 'state' && args.length === 2 && ['waiting', 'thinking', 'success', 'error'].includes(first)) {
+    return { version: VERSION, seq, type: 'state', state: first }
+  }
+  if (command === 'emotion' && args.length === 2) {
+    const mapped = { neutral: 'waiting', thinking: 'thinking', happy: 'success', concerned: 'error' }[first]
+    if (mapped) return { version: VERSION, seq, type: 'state', state: mapped }
+  }
+  if (command === 'arms' && args.length === 2 && ['balance', 'normal'].includes(first)) {
+    return { version: VERSION, seq, type: 'arms', placement: first }
+  }
+  if (command === 'eyes' && args.length === 2 && ['auto', 'center', 'left', 'right', 'up', 'down'].includes(first)) {
+    return { version: VERSION, seq, type: 'eyes', direction: first }
+  }
+  if (command === 'speech' && first === 'start' && (args.length === 3 || args.length === 4) && second) {
+    const speechId = args.length === 4 ? validateSpeechId(extra) : undefined
+    return { version: VERSION, seq, type: 'speech.start', audioPath: validateAudioPath(second), ...(speechId ? { speechId } : {}) }
+  }
+  if (command === 'speech' && first === 'stop' && (args.length === 2 || args.length === 3)) {
+    return { version: VERSION, seq, type: 'speech.stop', ...(args.length === 3 ? { speechId: validateSpeechId(second) } : {}) }
+  }
+  if (command === 'ping' && args.length === 1) return { version: VERSION, seq, type: 'ping' }
+  throw new Error('invalid arguments')
+}
+
+function send(directory, message) {
+  const socketPath = path.join(directory, 'bridge.sock')
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection(socketPath)
+    let settled = false
+    const finish = (error) => {
+      if (settled) return
+      settled = true
+      if (error) reject(error)
+      else resolve()
+    }
+    socket.setTimeout(2_000, () => finish(new Error('timed out connecting to the avatar')))
+    socket.once('connect', () => { socket.end(`${JSON.stringify(message)}\n`, () => finish()) })
+    socket.once('error', (error) => finish(error))
+    socket.once('close', () => { if (!settled) finish(new Error('avatar socket closed before accepting the message')) })
+  })
+}
+
+const args = process.argv.slice(2)
+if (args.length === 0 || args[0] === 'help') {
+  usage()
+} else {
+  try {
+    const directory = runtimeDirectory()
+    const message = makeMessage(args, nextSequence(directory))
+    await send(directory, message)
+  } catch (error) {
+    const code = error?.code
+    if (code === 'ENOENT' || code === 'ECONNREFUSED') fail('avatar is not running (bridge socket is unavailable)')
+    else if (code === 'EACCES') fail('permission denied accessing the avatar runtime directory or socket')
+    else fail(error instanceof Error ? error.message : String(error))
+  }
+}
