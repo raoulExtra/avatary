@@ -28,7 +28,8 @@ function describeArSessionError(error: unknown): string {
   return `${name}: ${message}`
 }
 function sceneViewerIntent(): string {
-  const modelUrl = new URL(`${import.meta.env.BASE_URL}avatar.glb`, window.location.href).href
+  const pageDirectory = window.location.pathname.replace(/[^/]*$/u, '')
+  const modelUrl = new URL(`${pageDirectory}avatar.glb`, window.location.origin).href
   const fallbackUrl = window.location.href
   const query = [
     `file=${encodeURIComponent(modelUrl)}`,
