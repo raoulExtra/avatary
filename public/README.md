@@ -4,3 +4,4 @@
 
 Source: <https://raw.githubusercontent.com/pixiv/three-vrm/dev/packages/three-vrm/examples/models/VRM1_Constraint_Twist_Sample.vrm>
 License: MIT, Copyright (c) 2019-2026 pixiv Inc. See <https://github.com/pixiv/three-vrm/blob/dev/LICENSE>.
+The bundled texture includes an Omarchy wordmark added for this project.
