@@ -28,8 +28,8 @@ function describeArSessionError(error: unknown): string {
   return `${name}: ${message}`
 }
 function sceneViewerIntent(): string {
-  const pageDirectory = window.location.pathname.replace(/[^/]*$/u, '')
-  const modelUrl = new URL(`${pageDirectory}avatar.glb`, window.location.origin).href
+  const scriptUrl = document.querySelector<HTMLScriptElement>('script[type="module"][src]')?.src
+  const modelUrl = new URL('../avatar.glb', scriptUrl ?? window.location.href).href
   const fallbackUrl = window.location.href
   const query = [
     `file=${encodeURIComponent(modelUrl)}`,
