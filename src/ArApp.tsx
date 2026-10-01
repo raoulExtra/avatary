@@ -13,6 +13,21 @@ function describeError(error: unknown): string {
   return String(error)
 }
 
+function describeArSessionError(error: unknown): string {
+  const name = error instanceof Error ? error.name : 'UnknownError'
+  const message = describeError(error)
+  if (name === 'NotSupportedError') {
+    return 'This browser or device does not support immersive AR with hit testing. Use Chrome on an ARCore Android phone.'
+  }
+  if (name === 'NotAllowedError') {
+    return 'AR permission was denied. Allow camera and motion access, then start AR again from the button.'
+  }
+  if (name === 'SecurityError') {
+    return 'AR requires HTTPS and a permitted camera context.'
+  }
+  return `${name}: ${message}`
+}
+
 export function ArApp() {
   const controller = useMemo(() => new AnimationController(), [])
   const [renderer, setRenderer] = useState<WebGLRenderer>()
@@ -63,7 +78,10 @@ export function ArApp() {
       setSession('active')
     } catch (sessionError: unknown) {
       setSession('idle')
-      setError(`Could not start AR: ${describeError(sessionError)}`)
+      if (sessionError instanceof Error && sessionError.name === 'NotSupportedError') {
+        setSupport('unsupported')
+      }
+      setError(`Could not start AR: ${describeArSessionError(sessionError)}`)
     }
   }, [renderer])
 
