@@ -17,6 +17,30 @@ app.
 The bundled `public/avatar.vrm` is the VRM 1.0 sample from pixiv/three-vrm;
 its attribution and MIT license are in `public/README.md`.
 
+## Android AR prototype
+
+Source entrypoint: [`ar.html`](./ar.html)
+
+Open `ar.html` on an ARCore-capable Android phone to place Omavatar on a
+detected floor or table. The prototype uses WebXR immersive AR and the
+existing VRM renderer; it does not connect to the desktop bridge.
+
+For local development:
+
+```bash
+npm run ar:dev
+```
+
+WebXR requires a secure context. `localhost` is allowed for local browser
+testing, but a phone accessing the development machine over Wi-Fi needs HTTPS.
+Deploy the Vite output to an HTTPS host or use a local HTTPS tunnel, then open
+`https://<host>/ar.html` in Chrome on Android.
+
+Tap `View in my room`, move the phone until a surface is detected, then tap
+`Place Omavatar here`. The current prototype supports one anchored avatar,
+repositioning, and exiting the AR session. It requires an Android device and
+browser exposing WebXR `immersive-ar` with the `hit-test` feature.
+
 ## Terminal control
 
 The executable `bin/oma-avatar` sends one sequenced protocol message per

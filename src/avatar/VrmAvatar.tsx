@@ -14,12 +14,13 @@ export type VrmAvatarProps = {
   readonly mouthOpen: number
   readonly armPlacement: ArmPlacement
   readonly eyeDirection: EyeDirection
+  readonly frameCamera?: boolean
   readonly onLoaded?: (loaded: LoadedVrm) => void
   readonly onError?: (error: unknown) => void
 }
 
 /** Loads one VRM, frames it from landmarks, and advances its runtime systems. */
-export function VrmAvatar({ url, controller, mouthOpen, armPlacement, eyeDirection, onLoaded, onError }: VrmAvatarProps) {
+export function VrmAvatar({ url, controller, mouthOpen, armPlacement, eyeDirection, frameCamera = true, onLoaded, onError }: VrmAvatarProps) {
   const { camera } = useThree()
   const [loaded, setLoaded] = useState<LoadedVrm>()
   const [adapter, setAdapter] = useState<VrmExpressionAdapter>()
@@ -52,9 +53,9 @@ export function VrmAvatar({ url, controller, mouthOpen, armPlacement, eyeDirecti
   }, [onError, onLoaded, url])
 
   useEffect(() => {
-    if (!frame || !(camera instanceof PerspectiveCamera)) return
+    if (!frameCamera || !frame || !(camera instanceof PerspectiveCamera)) return
     applyVrmFrame(camera, frame)
-  }, [camera, frame])
+  }, [camera, frame, frameCamera])
 
   useFrame((_, delta) => {
     if (!loaded || !adapter || !frame) return
