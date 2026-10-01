@@ -18,7 +18,7 @@ export type FrameOptions = {
 
 const DEFAULTS = {
   verticalFovDegrees: 28,
-  padding: 1.18,
+  padding: 1.0,
   minDistance: 0.25,
   maxDistance: 20,
 } as const
