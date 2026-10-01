@@ -29,6 +29,7 @@ const BLINK_NAMES = ['blink', 'Blink']
 const MOUTH_NAMES = ['aa', 'A', 'mouthA', 'MouthA', 'a']
 const HAPPY_NAMES = ['happy', 'joy', 'fun', 'Joy', 'Happy']
 const CONCERNED_NAMES = ['sad', 'sorrow', 'Sorrow', 'Sad']
+const BASE_MOUTH_OPEN = 0.12
 
 const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto' | 'discover'>, readonly [number, number]> = {
   center: [0, 0],
@@ -135,7 +136,7 @@ export class VrmExpressionAdapter {
     const manager = this.manager
     if (manager) {
       this.set(manager, this.names.blink, output.blink)
-      this.set(manager, this.names.mouth, mouthOpen)
+      this.set(manager, this.names.mouth, Math.max(BASE_MOUTH_OPEN, mouthOpen))
       this.set(manager, this.names.happy, output.smile)
       this.set(manager, this.names.concerned, output.intent.emotion === 'concerned' ? 0.8 : 0)
     }
