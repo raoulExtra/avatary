@@ -60,7 +60,7 @@ export function VrmAvatar({ url, controller, mouthOpen, armPlacement, eyeDirecti
     if (!loaded || !adapter || !frame) return
     updateVrm(loaded, delta)
     adapter.setArmPlacement(armPlacement)
-    adapter.apply(controller.update(delta), mouthRef.current, frame.target, eyeDirection)
+    adapter.apply(controller.update(delta), mouthRef.current, frame.target, eyeDirection, delta)
   })
 
   return loaded ? <primitive object={loaded.vrm.scene} /> : null

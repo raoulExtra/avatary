@@ -25,7 +25,7 @@ disable this behavior.
 bin/oma-avatar state waiting|thinking|success|error
 bin/oma-avatar emotion neutral|thinking|happy|concerned
 bin/oma-avatar arms balance|normal|stop
-bin/oma-avatar eyes auto|center|left|right|up|down
+bin/oma-avatar eyes auto|center|left|right|up|down|discover
 bin/oma-avatar speech start <relative-audio-file> [speech-id]
 bin/oma-avatar speech stop [speech-id]
 bin/oma-avatar run <script.ava>
@@ -58,6 +58,8 @@ bin/oma-avatar run all_cmd.ava
 
 The repository includes `all_cmd.ava` as a manual smoke sequence for state,
 emotion, arm, eye, and ping commands.
+`discover` smoothly scans left, right, up, and down instead of following the
+state-driven automatic gaze.
 
 Emotion commands use the canonical `state` wire message:
 `neutral` → `waiting`, `thinking` → `thinking`, `happy` → `success`, and

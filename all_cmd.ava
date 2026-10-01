@@ -45,5 +45,6 @@ eyes down
 sleep 1
 eyes center
 sleep 1
+eyes discover -sec 4
 eyes auto
 enter Script complete

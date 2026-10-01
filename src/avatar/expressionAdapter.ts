@@ -30,7 +30,7 @@ const MOUTH_NAMES = ['aa', 'A', 'mouthA', 'MouthA', 'a']
 const HAPPY_NAMES = ['happy', 'joy', 'fun', 'Joy', 'Happy']
 const CONCERNED_NAMES = ['sad', 'sorrow', 'Sorrow', 'Sad']
 
-const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto'>, readonly [number, number, number]> = {
+const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto' | 'discover'>, readonly [number, number, number]> = {
   center: [0, 0, 1],
   left: [-0.28, 0, 1],
   right: [0.28, 0, 1],
@@ -58,6 +58,7 @@ export class VrmExpressionAdapter {
   private readonly headEuler = new Euler()
   private readonly lookTarget = new Vector3()
   private readonly armsForBalance: readonly StoredArmPose[]
+  private discoverTime = 0
   private armPlacement: ArmPlacement = 'normal'
 
   public constructor(private readonly vrm: VRM) {
@@ -130,7 +131,7 @@ export class VrmExpressionAdapter {
     this.armPlacement = placement
   }
 
-  public apply(output: AnimationControllerOutput, mouthOpen: number, target: Vector3, eyeDirection: EyeDirection): void {
+  public apply(output: AnimationControllerOutput, mouthOpen: number, target: Vector3, eyeDirection: EyeDirection, deltaSeconds: number): void {
     const manager = this.manager
     if (manager) {
       this.set(manager, this.names.blink, output.blink)
@@ -152,6 +153,11 @@ export class VrmExpressionAdapter {
       if (eyeDirection === 'auto') {
         this.lookTarget.z += 1
         if (output.intent.gaze.kind === 'up') this.lookTarget.y += output.intent.gaze.amount
+      } else if (eyeDirection === 'discover') {
+        this.discoverTime += Math.min(Math.max(deltaSeconds, 0), 0.1)
+        this.lookTarget.x += Math.sin(this.discoverTime * 0.55) * 0.45 + Math.sin(this.discoverTime * 0.23) * 0.14
+        this.lookTarget.y += Math.sin(this.discoverTime * 0.37 + 1.1) * 0.18 + Math.sin(this.discoverTime * 0.71) * 0.05
+        this.lookTarget.z += 1
       } else {
         const [x, y, z] = EYE_OFFSETS[eyeDirection]
         this.lookTarget.x += x

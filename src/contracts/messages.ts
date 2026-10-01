@@ -42,7 +42,7 @@ export type ArmsMessage = MessageBase & {
   readonly type: 'arms'
   readonly placement: ArmPlacement
 }
-export type EyeDirection = 'auto' | 'center' | 'left' | 'right' | 'up' | 'down'
+export type EyeDirection = 'auto' | 'center' | 'left' | 'right' | 'up' | 'down' | 'discover'
 
 export type EyesMessage = MessageBase & {
   readonly type: 'eyes'
