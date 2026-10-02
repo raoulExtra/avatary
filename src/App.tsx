@@ -176,11 +176,6 @@ export function App() {
       setShowHelp(true)
       return
     }
-    if (normalizedCommand === 'portrait on' || normalizedCommand === 'portrait off') {
-      setPortraitMode(normalizedCommand.endsWith('on'))
-      setCommandInput('')
-      return
-    }
     try {
       await invoke('run_avatar_command', { command: normalizedCommand })
       setCommandInput('')

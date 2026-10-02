@@ -100,12 +100,13 @@ function usage() {
   oma-avatar arms balance|normal|stop
   oma-avatar portrait on|off
   oma-avatar eyes auto|center|left|right|up|down|discover
+  oma-avatar ! <unix command>
   oma-avatar <command> ... -sec <seconds>
   oma-avatar run <script.ava>  (! <unix command> and portrait on|off supported)
   oma-avatar speech start <relative-audio-file> [speech-id]
   oma-avatar speech stop [speech-id]
   oma-avatar ping
-  oma-avatar help`)
+  `)
 }
 
 function makeMessage(args, seq) {
@@ -281,6 +282,8 @@ if (args.length === 0 || args[0] === 'help') {
     if (args[0] === 'run') {
       if (args.length !== 2) throw new Error('run requires one .ava script file')
       await executeScript(args[1], directory)
+    } else if (args[0] === '!') {
+      runShellCommand(args.slice(1).join(' '))
     } else {
       await sendCommand(args, directory)
     }

@@ -78,8 +78,10 @@ bin/oma-avatar emotion neutral|thinking|happy|concerned
 bin/oma-avatar arms balance|normal|stop
 bin/oma-avatar dance swifty|stop
 bin/oma-avatar eyes auto|center|left|right|up|down|discover
+bin/oma-avatar portrait on|off
 bin/oma-avatar speech start <relative-audio-file> [speech-id]
 bin/oma-avatar speech stop [speech-id]
+bin/oma-avatar ! <unix command>
 bin/oma-avatar run <script.ava>
 bin/oma-avatar ping
 ```
