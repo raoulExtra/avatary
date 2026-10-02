@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import type { ArmPlacement, BridgeMessage, EyeDirection } from './contracts/messages'
+import appPackage from '../package.json'
 import type { LoadedVrm } from './avatar/model'
 import { AnimationController } from './avatar/animationController'
 import { AvatarScene } from './avatar/AvatarScene'
@@ -225,7 +226,7 @@ export function App() {
         <strong>Omavatar</strong>
         <span className={`status-dot status-${status}`} />
         <span>{lastCommand}{assistantState.speaking ? ' · speaking' : ''}</span>
-        <small>{model ? `${model.version} · ${model.capabilities.unsupported.length ? 'partial capabilities' : 'full capabilities'}` : 'loading model…'}</small>
+        <small>{appPackage.version} · {model ? (model.capabilities.unsupported.length ? 'partial capabilities' : 'full capabilities') : 'loading model…'}</small>
         {error ? <small className="error-text">{error}</small> : null}
       </section>
     </main>
