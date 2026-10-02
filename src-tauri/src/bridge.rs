@@ -32,7 +32,7 @@ pub fn start_bridge(config: BridgeConfig) -> Result<BridgeHandle, String> {
     }).map_err(|e| format!("start bridge thread: {e}"))?;
     Ok(BridgeHandle { stop, thread: Some(thread) })
 }
-fn sequence_of(message: &ValidatedMessage) -> u64 { match message { ValidatedMessage::State { seq, .. } | ValidatedMessage::SpeechStart { seq, .. } | ValidatedMessage::SpeechStop { seq, .. } | ValidatedMessage::Arms { seq, .. } | ValidatedMessage::Eyes { seq, .. } | ValidatedMessage::Ping { seq, .. } | ValidatedMessage::Diagnostics { seq, .. } => *seq } }
+fn sequence_of(message: &ValidatedMessage) -> u64 { match message { ValidatedMessage::State { seq, .. } | ValidatedMessage::SpeechStart { seq, .. } | ValidatedMessage::SpeechStop { seq, .. } | ValidatedMessage::Arms { seq, .. } | ValidatedMessage::Dance { seq, .. } | ValidatedMessage::Eyes { seq, .. } | ValidatedMessage::Ping { seq, .. } | ValidatedMessage::Diagnostics { seq, .. } => *seq } }
 fn handle_client(stream: UnixStream, callback: Arc<dyn Fn(ValidatedMessage) + Send + Sync>, disconnected: Arc<dyn Fn() + Send + Sync>, sequence: Arc<Mutex<Option<u64>>>) {
     let mut connection_sequence = None; let mut reader = BufReader::new(stream); let mut line = Vec::new();
     loop { line.clear(); match reader.read_until(b'\n', &mut line) {

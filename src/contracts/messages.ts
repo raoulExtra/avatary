@@ -42,6 +42,13 @@ export type ArmsMessage = MessageBase & {
   readonly type: 'arms'
   readonly placement: ArmPlacement
 }
+export type DanceStyle = 'swifty'
+
+export type DanceMessage = MessageBase & {
+  readonly type: 'dance'
+  readonly style: DanceStyle | 'stop'
+}
+
 export type EyeDirection = 'auto' | 'center' | 'left' | 'right' | 'up' | 'down' | 'discover'
 
 export type EyesMessage = MessageBase & {
@@ -66,6 +73,7 @@ export type BridgeMessage =
   | SpeechStartMessage
   | SpeechStopMessage
   | ArmsMessage
+  | DanceMessage
   | EyesMessage
   | PingMessage
   | DiagnosticsMessage

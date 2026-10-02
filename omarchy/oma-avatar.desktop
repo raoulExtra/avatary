@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Omavatar
+Comment=Launch Omavatar
+Exec=env OMA_AVATAR_WINDOW_WIDTH=400 OMA_AVATAR_WINDOW_HEIGHT=480 oma-avatar ping
+TryExec=oma-avatar
+Terminal=false
+Categories=Utility;Accessibility;
+Keywords=Omarchy;avatar;assistant;presence;
+StartupWMClass=oma-avatar-host

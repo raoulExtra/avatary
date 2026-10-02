@@ -11,15 +11,16 @@ export type AvatarSceneProps = {
   readonly mouthOpen: number
   readonly armPlacement: ArmPlacement
   readonly eyeDirection: EyeDirection
+  readonly portraitMode: boolean
   readonly onLoaded: (loaded: LoadedVrm) => void
   readonly onError: (error: unknown) => void
 }
 
 /** The host window remains transparent; lights only affect the VRM content. */
-export function AvatarScene({ modelUrl, controller, mouthOpen, armPlacement, eyeDirection, onLoaded, onError }: AvatarSceneProps) {
+export function AvatarScene({ modelUrl, controller, mouthOpen, armPlacement, eyeDirection, portraitMode, onLoaded, onError }: AvatarSceneProps) {
   return (
     <Canvas
-      camera={{ fov: 28, near: 0.01, far: 20, position: [0, 1, 3] }}
+      camera={{ fov: 28, near: 0.01, far: 20, position: portraitMode ? [0, 1, 2.6] : [0, 1, 3.6] }}
       gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
       dpr={[1, 2]}
     >

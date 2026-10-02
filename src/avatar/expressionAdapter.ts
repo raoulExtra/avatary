@@ -1,6 +1,6 @@
 import { Euler, Quaternion, Vector3, type Object3D } from 'three'
 import type { VRM } from '@pixiv/three-vrm'
-import type { AnimationControllerOutput } from './animationController'
+import type { AnimationControllerOutput, DanceMotionOutput } from './animationController'
 import type { ArmPlacement, EyeDirection } from '../contracts/messages'
 
 type ExpressionManager = {
@@ -16,6 +16,7 @@ type ExpressionNames = {
 }
 
 type StoredArmPose = {
+  readonly name: string
   readonly node: Object3D
   readonly position: Vector3
   readonly quaternion: Quaternion
@@ -23,13 +24,29 @@ type StoredArmPose = {
   readonly stopQuaternion: Quaternion
 }
 
+type StoredDanceBone = {
+  readonly name: DanceBoneName
+  readonly node: Object3D
+  readonly quaternion: Quaternion
+}
+
+const DANCE_BONES = [
+  'hips', 'spine', 'chest', 'upperChest',
+  'leftUpperArm', 'leftLowerArm', 'leftHand',
+  'rightUpperArm', 'rightLowerArm', 'rightHand',
+  'leftUpperLeg', 'leftLowerLeg', 'rightUpperLeg', 'rightLowerLeg',
+] as const
+type DanceBoneName = (typeof DANCE_BONES)[number]
 const ARM_BONES = ['leftUpperArm', 'leftLowerArm', 'leftHand', 'rightUpperArm', 'rightLowerArm', 'rightHand'] as const
+function isArmDanceBone(name: DanceBoneName): boolean {
+  return name.endsWith('Arm') || name.endsWith('Hand')
+}
 
 const BLINK_NAMES = ['blink', 'Blink']
 const MOUTH_NAMES = ['aa', 'A', 'mouthA', 'MouthA', 'a']
 const HAPPY_NAMES = ['happy', 'joy', 'fun', 'Joy', 'Happy']
 const CONCERNED_NAMES = ['sad', 'sorrow', 'Sorrow', 'Sad']
-const BASE_MOUTH_OPEN = 0.22
+const BASE_MOUTH_OPEN = 0.42
 
 const EYE_OFFSETS: Record<Exclude<EyeDirection, 'auto' | 'discover'>, readonly [number, number]> = {
   center: [0, 0],
@@ -59,6 +76,9 @@ export class VrmExpressionAdapter {
   private readonly headEuler = new Euler()
   private readonly lookTarget = new Vector3()
   private readonly armsForBalance: readonly StoredArmPose[]
+  private readonly danceBones: readonly StoredDanceBone[]
+  private readonly danceEuler = new Euler()
+  private readonly danceOffset = new Quaternion()
   private discoverTime = 0
   private armPlacement: ArmPlacement = 'normal'
 
@@ -123,9 +143,14 @@ export class VrmExpressionAdapter {
     this.armsForBalance = ARM_BONES.flatMap((bone) => {
       const node = armNodes[bone]
       return node
-        ? [{ node, position: node.position.clone(), quaternion: node.quaternion.clone(), normalQuaternion: normalQuaternions[bone] ?? node.quaternion.clone(), stopQuaternion: stopQuaternions[bone] ?? node.quaternion.clone() }]
+        ? [{ name: bone, node, position: node.position.clone(), quaternion: node.quaternion.clone(), normalQuaternion: normalQuaternions[bone] ?? node.quaternion.clone(), stopQuaternion: stopQuaternions[bone] ?? node.quaternion.clone() }]
         : []
     })
+    this.danceBones = DANCE_BONES.flatMap((name) => {
+      const node = vrm.humanoid?.getNormalizedBoneNode(name)
+      return node ? [{ name, node, quaternion: node.quaternion.clone() }] : []
+    })
+
 
   }
   public setArmPlacement(placement: ArmPlacement): void {
@@ -148,6 +173,8 @@ export class VrmExpressionAdapter {
         : this.armPlacement === 'stop' ? arm.stopQuaternion : arm.quaternion
       arm.node.quaternion.copy(quaternion)
     }
+    this.applyDance(output.dance)
+
 
     if (this.vrm.lookAt) {
       this.lookTarget.copy(target)
@@ -170,6 +197,55 @@ export class VrmExpressionAdapter {
       this.headOffset.setFromEuler(this.headEuler)
       this.head.quaternion.copy(this.baseHeadRotation).multiply(this.headOffset)
     }
+  }
+
+  private applyDance(dance: DanceMotionOutput): void {
+    if (dance.style !== 'swifty') {
+      for (const bone of this.danceBones) {
+        if (isArmDanceBone(bone.name)) continue
+        bone.node.quaternion.copy(bone.quaternion)
+      }
+      return
+    }
+    for (const bone of this.danceBones) {
+      if (!isArmDanceBone(bone.name)) bone.node.quaternion.copy(bone.quaternion)
+    }
+
+    const beat = dance.elapsedSeconds * Math.PI * 2.4
+    const step = Math.sin(beat)
+    const bounce = 0.5 - 0.5 * Math.cos(beat)
+    const leftLift = Math.max(0, step)
+    const rightLift = Math.max(0, -step)
+    const leftArm = 0.12 + 0.6 * leftLift
+    const rightArm = 0.12 + 0.6 * rightLift
+    this.setDanceBone('hips', 0.035 * bounce, 0.1 * step, 0.07 * step)
+    this.setDanceBone('spine', 0.035 * Math.sin(beat + 0.5), 0.06 * step, 0)
+    this.setDanceBone('chest', 0.05 * Math.sin(beat + 0.8), 0.08 * step, 0)
+    this.setDanceBone('upperChest', 0.03 * Math.sin(beat + 1.2), 0.05 * step, 0)
+    this.setDanceArm('leftUpperArm', leftArm)
+    this.setDanceArm('leftLowerArm', 0.08 + 0.5 * leftLift)
+    this.setDanceArm('leftHand', 0.08 + 0.45 * leftLift)
+    this.setDanceArm('rightUpperArm', rightArm)
+    this.setDanceArm('rightLowerArm', 0.08 + 0.5 * rightLift)
+    this.setDanceArm('rightHand', 0.08 + 0.45 * rightLift)
+    this.setDanceBone('leftUpperLeg', 0.07 * rightLift, 0, 0.025 * step)
+    this.setDanceBone('leftLowerLeg', -0.04 * rightLift, 0, 0)
+    this.setDanceBone('rightUpperLeg', 0.07 * leftLift, 0, -0.025 * step)
+    this.setDanceBone('rightLowerLeg', -0.04 * leftLift, 0, 0)
+  }
+
+  private setDanceArm(name: string, weight: number): void {
+    const pose = this.armsForBalance.find((candidate) => candidate.name === name)
+    if (!pose) return
+    pose.node.quaternion.copy(pose.normalQuaternion).slerp(pose.stopQuaternion, Math.max(0, Math.min(1, weight)))
+  }
+
+  private setDanceBone(name: DanceBoneName, x: number, y: number, z: number): void {
+    const bone = this.danceBones.find((candidate) => candidate.name === name)
+    if (!bone) return
+    this.danceEuler.set(x, y, z)
+    this.danceOffset.setFromEuler(this.danceEuler)
+    bone.node.quaternion.copy(bone.quaternion).multiply(this.danceOffset)
   }
 
   private set(manager: ExpressionManager, name: string | undefined, value: number): void {

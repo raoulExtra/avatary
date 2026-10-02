@@ -94,9 +94,10 @@ function nextSequence(directory) {
 
 function usage() {
   console.log(`Usage:
-  oma-avatar state waiting|thinking|success|error
-  oma-avatar emotion neutral|happy|concerned|thinking
+  oma-avatar state|s waiting|thinking|success|error
+  oma-avatar emotion|emo neutral|happy|concerned|thinking
   oma-avatar arms balance|normal|stop
+  oma-avatar portrait on|off
   oma-avatar eyes auto|center|left|right|up|down|discover
   oma-avatar <command> ... -sec <seconds>
   oma-avatar run <script.ava>
@@ -107,7 +108,8 @@ function usage() {
 }
 
 function makeMessage(args, seq) {
-  const [command, first, second, extra] = args
+  const [rawCommand, first, second, extra] = args
+  const command = rawCommand === 's' ? 'state' : rawCommand === 'emo' ? 'emotion' : rawCommand
   if (command === 'state' && args.length === 2 && ['waiting', 'thinking', 'success', 'error'].includes(first)) {
     return { version: VERSION, seq, type: 'state', state: first }
   }
@@ -117,6 +119,9 @@ function makeMessage(args, seq) {
   }
   if (command === 'arms' && args.length === 2 && ['balance', 'normal', 'stop'].includes(first)) {
     return { version: VERSION, seq, type: 'arms', placement: first }
+  }
+  if (command === 'dance' && args.length === 2 && ['swifty', 'stop'].includes(first)) {
+    return { version: VERSION, seq, type: 'dance', style: first }
   }
   if (command === 'eyes' && args.length === 2 && ['auto', 'center', 'left', 'right', 'up', 'down', 'discover'].includes(first)) {
     return { version: VERSION, seq, type: 'eyes', direction: first }
@@ -128,7 +133,9 @@ function makeMessage(args, seq) {
   if (command === 'speech' && first === 'stop' && (args.length === 2 || args.length === 3)) {
     return { version: VERSION, seq, type: 'speech.stop', ...(args.length === 3 ? { speechId: validateSpeechId(second) } : {}) }
   }
-  if (command === 'ping' && args.length === 1) return { version: VERSION, seq, type: 'ping' }
+  if (command === 'portrait' && args.length === 2 && ['on', 'off'].includes(first)) {
+    return { version: VERSION, seq, type: 'diagnostics', level: 'info', code: 'portrait', message: first }
+  }
   throw new Error('invalid arguments')
 }
 function splitDuration(args) {
@@ -144,7 +151,12 @@ async function sendCommand(args, directory) {
   const { commandArgs, seconds } = splitDuration(args)
   const message = makeMessage(commandArgs, nextSequence(directory))
   await sendWithAutoStart(directory, message)
-  if (seconds > 0) await new Promise((resolve) => setTimeout(resolve, seconds * 1_000))
+  if (seconds > 0) {
+    await new Promise((resolve) => setTimeout(resolve, seconds * 1_000))
+    if (message.type === 'dance' && message.style === 'swifty') {
+      await sendWithAutoStart(directory, makeMessage(['dance', 'stop'], nextSequence(directory)))
+    }
+  }
 }
 
 

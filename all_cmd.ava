@@ -5,46 +5,57 @@ ping
 enter Press Enter to test state commands
 
 state waiting
+enter enter
 sleep 1
 state thinking
+enter enter
 sleep 1
 state success
+enter enter
 sleep 1
 state error
-sleep 1
-state waiting
-enter Press Enter to test emotion commands
-
 emotion neutral
+enter enter
 sleep 1
 emotion thinking
+enter enter
 sleep 1
 emotion happy
+enter enter
 sleep 1
 emotion concerned
+enter enter
 sleep 1
 emotion neutral
-enter Press Enter to test arm positions
-
+enter enter
 arms normal
+enter enter
 sleep 1
 arms stop
+enter enter
 sleep 1
 arms balance
+enter enter
 sleep 1
 arms normal
-enter Press Enter to test eye directions
-
+enter enter
 eyes left
+enter enter
 sleep 1
 eyes right
+enter enter
 sleep 1
 eyes up
+enter enter
 sleep 1
 eyes down
+enter enter
 sleep 1
 eyes center
+enter enter
 sleep 1
 eyes discover -sec 4
+enter enter
 eyes auto
+enter enter
 enter Script complete

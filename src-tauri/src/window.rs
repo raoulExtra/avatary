@@ -2,8 +2,8 @@ use std::env;
 
 use tauri::{App, PhysicalPosition, Position, Runtime, WebviewUrl, WebviewWindowBuilder, Window};
 
-const DEFAULT_WIDTH: f64 = 140.0;
-const DEFAULT_HEIGHT: f64 = 240.0;
+const DEFAULT_WIDTH: f64 = 460.0;
+const DEFAULT_HEIGHT: f64 = 600.0;
 
 #[derive(Debug)]
 struct WindowSettings {
@@ -55,8 +55,11 @@ fn optional_bool(name: &str, default: bool) -> Result<bool, String> {
 pub fn setup<R: Runtime>(app: &mut App<R>) -> Result<(), Box<dyn std::error::Error>> {
     let settings = WindowSettings::from_environment()?;
     let window = WebviewWindowBuilder::new(app, "avatar", WebviewUrl::App("index.html".into()))
-        .title("Oma Avatar")
+        .title("Omavatar")
         .inner_size(settings.width, settings.height)
+        .min_inner_size(settings.width, settings.height)
+        .max_inner_size(settings.width, settings.height)
+        .visible(false)
         .resizable(false)
         .decorations(false)
         .transparent(true)

@@ -6,9 +6,11 @@ mod validation;
 mod window;
 
 use std::collections::VecDeque;
+use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 
 use tauri::{Emitter, Manager, State};
+
 
 struct BridgeState {
     _bridge: Mutex<Option<bridge::BridgeHandle>>,
@@ -26,6 +28,77 @@ fn drain_bridge_messages(state: State<'_, BridgeState>) -> Vec<validation::Valid
     let mut messages = state.messages.lock().expect("bridge message queue poisoned");
     messages.drain(..).collect()
 }
+
+#[tauri::command]
+fn run_avatar_command(command: String) -> Result<(), String> {
+    let args: Vec<&str> = command.split_whitespace().collect();
+    if args.is_empty() {
+        return Ok(());
+    }
+    if args.iter().any(|arg| arg.starts_with('-') && *arg != "-sec") {
+        return Err("unsupported command option".into());
+    }
+    std::process::Command::new("oma-avatar")
+        .args(args)
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| format!("cannot run oma-avatar: {error}"))
+}
+
+const MAX_SHELL_COMMAND_LENGTH: usize = 4096;
+
+fn validate_shell_command(command: &str) -> Result<&str, String> {
+    let command = command.trim();
+    if command.is_empty() {
+        return Err("shell command cannot be empty".into());
+    }
+    if command.len() > MAX_SHELL_COMMAND_LENGTH {
+        return Err("shell command exceeds 4096 bytes".into());
+    }
+    if command.bytes().any(|byte| byte == 0 || byte == b'\r' || byte == b'\n') {
+        return Err("shell command cannot contain NULs or newlines".into());
+    }
+    Ok(command)
+}
+
+#[tauri::command]
+fn run_shell_command(command: String) -> Result<(), String> {
+    let command = validate_shell_command(&command)?;
+    Command::new("/bin/sh")
+        .arg("-c")
+        .arg(command)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| format!("cannot run shell command: {error}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{validate_shell_command, MAX_SHELL_COMMAND_LENGTH};
+
+    #[test]
+    fn shell_command_is_trimmed() {
+        assert_eq!(validate_shell_command("  pw-play sample.wav  "), Ok("pw-play sample.wav"));
+    }
+
+    #[test]
+    fn shell_command_rejects_empty_and_control_lines() {
+        assert!(validate_shell_command(" \t ").is_err());
+        assert!(validate_shell_command("printf ok\npw-play sample.wav").is_err());
+        assert!(validate_shell_command("printf\0ok").is_err());
+    }
+
+    #[test]
+    fn shell_command_enforces_byte_limit() {
+        let command = "x".repeat(MAX_SHELL_COMMAND_LENGTH + 1);
+        assert!(validate_shell_command(&command).is_err());
+    }
+}
+
+
 
 fn main() {
     tauri::Builder::default()
@@ -63,7 +136,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             window::set_click_through,
             resolve_audio_path,
-            drain_bridge_messages
+            drain_bridge_messages,
+            run_avatar_command,
+            run_shell_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running Oma Avatar host");

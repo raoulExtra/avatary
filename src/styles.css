@@ -21,12 +21,41 @@ body { overflow: hidden; background: transparent; }
   display: block;
   width: 100% !important;
   height: 100% !important;
+  transform: translateY(-28px) scale(0.9);
+  transform-origin: center center;
+}
+.portrait-mode canvas {
+  clip-path: inset(0 0 60% 0);
+  transform: translateY(280px) scale(1.5);
+}
+.help-popup {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 58px;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 9px;
+  background: rgb(18 22 32 / 94%);
+  pointer-events: auto;
+}
+.help-popup code { color: #dce7ff; font-size: 10px; }
+.help-close {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  border: 0;
+  color: #dce7ff;
+  background: transparent;
+  cursor: pointer;
 }
 
 .status-card {
   position: absolute;
   right: 12px;
-  bottom: 12px;
+  bottom: 58px;
   display: grid;
   grid-template-columns: auto auto 1fr;
   gap: 3px 7px;
@@ -40,6 +69,36 @@ body { overflow: hidden; background: transparent; }
   font-size: 11px;
   line-height: 1.25;
   pointer-events: none;
+}
+.command-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.command-bar input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 7px;
+  color: #f4f7ff;
+  background: rgb(18 22 32 / 88%);
+}
+.command-bar button {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #101521;
+  background: #8dd6ff;
+  cursor: pointer;
+}
+.command-bar input,
+.command-bar button {
+  pointer-events: auto;
 }
 
 .status-card strong { grid-column: 1 / -1; font-size: 12px; }

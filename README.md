@@ -84,6 +84,16 @@ bin/oma-avatar run <script.ava>
 bin/oma-avatar ping
 ```
 
+In the avatar command field, prefix a command with `!` to run it through
+`/bin/sh`. The command is detached and its output is discarded:
+
+```text
+! pw-play /usr/share/sounds/alsa/Front_Center.wav
+```
+
+This is intentionally equivalent to launching a local shell command; only use
+commands you trust. Empty commands, NUL bytes, and newlines are rejected.
+
 Example:
 
 ```bash
