@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "peter.omavatar",
   "name": "Omavatar",
-  "version": "1.1",
+  "version": "1.1.0",
   "author": "Peter",
   "license": "MIT",
   "description": "Omarchy bar control for the Omavatar assistant desktop companion.",
