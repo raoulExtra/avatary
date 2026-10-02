@@ -11,6 +11,7 @@ const VERSION = 1
 const MAX_SEQUENCE = Number.MAX_SAFE_INTEGER
 const MAX_AUDIO_PATH = 512
 const MAX_SPEECH_ID = 128
+const MAX_SHELL_COMMAND = 4096
 const LOCK_STALE_MS = 10_000
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const BRIDGE_START_TIMEOUT_MS = 20_000
@@ -100,7 +101,7 @@ function usage() {
   oma-avatar portrait on|off
   oma-avatar eyes auto|center|left|right|up|down|discover
   oma-avatar <command> ... -sec <seconds>
-  oma-avatar run <script.ava>
+  oma-avatar run <script.ava>  (! <unix command> and portrait on|off supported)
   oma-avatar speech start <relative-audio-file> [speech-id]
   oma-avatar speech stop [speech-id]
   oma-avatar ping
@@ -222,6 +223,16 @@ async function sendWithAutoStart(directory, message) {
     await send(directory, message)
   }
 }
+
+function runShellCommand(command) {
+  const trimmed = command.trim()
+  if (!trimmed) throw new Error('shell command cannot be empty')
+  if (trimmed.length > MAX_SHELL_COMMAND) throw new Error(`shell command exceeds ${MAX_SHELL_COMMAND} characters`)
+  if (/[\0\r\n]/u.test(trimmed)) throw new Error('shell command cannot contain NULs or newlines')
+  const child = spawn('/bin/sh', ['-c', trimmed], { detached: true, stdio: 'ignore' })
+  child.unref()
+}
+
 async function executeScript(file, directory) {
   if (!file || !file.endsWith('.ava')) throw new Error('script file must use the .ava extension')
   const input = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -231,6 +242,11 @@ async function executeScript(file, directory) {
     for (const [index, rawLine] of lines.entries()) {
       const line = rawLine.trim()
       if (!line || line.startsWith('#')) continue
+      if (line.startsWith('!')) {
+        runShellCommand(line.slice(1))
+        console.log('ava> shell command started')
+        continue
+      }
       const parts = line.split(/\s+/u)
       const [command, value] = parts
       console.log(`ava> ${line}`)

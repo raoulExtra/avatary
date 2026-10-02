@@ -1,7 +1,14 @@
 # Oma Avatar command showcase
 # Run with: bin/oma-avatar run all_cmd.ava
+! pw-play /usr/share/sounds/alsa/Front_Center.wav   
 
 ping
+
+portrait on
+enter portrait on
+sleep 1
+portrait off
+enter portrait off
 enter Press Enter to test state commands
 
 state waiting
